@@ -2,6 +2,7 @@ const Manager = require("./lib/Manager");
 const Engineer = require("./lib/Engineer");
 const Intern = require("./lib/Intern");
 const inquirer = require("inquirer");
+const questions = require("./lib/Questions.js");
 const path = require("path");
 const fs = require("fs");
 
@@ -10,26 +11,50 @@ const outputPath = path.join(OUTPUT_DIR, "team.html");
 
 const render = require("./lib/htmlRenderer");
 
+let employees = [];
 
-// Write code to use inquirer to gather information about the development team members,
-// and to create objects for each team member (using the correct classes as blueprints!)
+// inquirer function
+let promptUser = () => {
+    return inquirer.prompt(questions)
+        .then(function (answers) {
 
-// After the user has input all employees desired, call the `render` function (required
-// above) and pass in an array containing all employee objects; the `render` function will
-// generate and return a block of HTML including templated divs for each employee!
+            let anotherEmployee;
+            switch (answers.role) {
+                case "Engineer":
+                    anotherEmployee = new Engineer(answers.name, answers.id, answers.email, answers.github);
+                    employees.push(anotherEmployee);
+                    break;
+                case "Manager":
+                    anotherEmployee = new Manager(answers.name, answers.id, answers.email, answers.officeNumber);
+                    employees.push(anotherEmployee);
+                    break;
+                case "Intern":
+                    anotherEmployee = new Intern(answers.name, answers.id, answers.email, answers.school);
+                    employees.push(anotherEmployee);
+                    break;
+            }
 
-// After you have your html, you're now ready to create an HTML file using the HTML
-// returned from the `render` function. Now write it to a file named `team.html` in the
-// `output` folder. You can use the variable `outputPath` above target this location.
-// Hint: you may need to check if the `output` folder exists and create it if it
-// does not.
+            //repeats or end questions
+            if (answers.addOrEnd) {
+                return promptUser();
+            }
 
-// HINT: each employee type (manager, engineer, or intern) has slightly different
-// information; write your code to ask different questions via inquirer depending on
-// employee type.
+            createHTML();
 
-// HINT: make sure to build out your classes first! Remember that your Manager, Engineer,
-// and Intern classes should all extend from a class named Employee; see the directions
-// for further information. Be sure to test out each class and verify it generates an
-// object with the correct structure and methods. This structure will be crucial in order
-// for the provided `render` function to work! ```
+        });
+}
+
+// generate .html with inquirer data
+let createHTML = () => {
+    let createHTML = render(employees);
+    fs.writeFile(outputPath, createHTML, function(error) {
+        if (error) {
+            console.log(error);
+        }
+        else {
+            console.log("html saved to Output/");
+        }
+    })
+}
+
+promptUser();
